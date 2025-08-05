@@ -6,7 +6,8 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>متجر المنتج - Your Product Store</title>
+  <title>CuisineTech Matrix</title>
+  <link rel="icon" href="https://i.imgur.com/8QSe3yx.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -1695,12 +1696,12 @@
     <div class="product-card">
       <!-- Title - Order 1 -->
       <div class="mobile-title">
-        <h1 class="product-title">Matrix Bras Mixeur 4 in 1 inox 1200W</h1>
+        <h1 class="product-title product-name">Matrix Bras Mixeur 4 in 1 inox 1200W</h1>
       </div>
       
       <!-- Price - Order 2 -->
       <div class="mobile-price">
-        <div class="product-price">8,900 دج</div>
+        <div class="product-price" data-price="8900">8,900 دج</div>
       </div>
       
       <!-- Badge - Order 3 -->
@@ -1801,8 +1802,8 @@
           </div>
         </div>
         <div class="product-details">
-          <h1 class="product-title">Matrix Bras Mixeur 4 in 1 inox 1200W</h1>
-          <div class="product-price">8,900 دج</div>
+          <h1 class="product-title product-name">Matrix Bras Mixeur 4 in 1 inox 1200W</h1>
+          <div class="product-price" data-price="8900">8,900 دج</div>
           <div class="product-features">
             <div class="feature-badge">
               <i class="fas fa-truck-moving"></i>
@@ -1860,13 +1861,18 @@
     });
 
     // Quantity selector functionality
-    const quantityDisplay = document.querySelector('.quantity-display');
-    const minusBtn = document.querySelector('.minus');
-    const plusBtn = document.querySelector('.plus');
-    let quantity = 1;
+    const quantityDisplays = document.querySelectorAll('.quantity-display');
+    const minusBtns = document.querySelectorAll('.minus');
+    const plusBtns = document.querySelectorAll('.plus');
+    let quantities = Array.from(quantityDisplays).map(() => 1); // Initialize all quantities to 1
     const MAX_QUANTITY = 99;
 
-    function updateQuantityDisplay() {
+    function updateQuantityDisplay(index) {
+      const quantityDisplay = quantityDisplays[index];
+      const minusBtn = minusBtns[index];
+      const plusBtn = plusBtns[index];
+      const quantity = quantities[index];
+      
       quantityDisplay.textContent = quantity;
       minusBtn.disabled = quantity <= 1;
       plusBtn.disabled = quantity >= MAX_QUANTITY;
@@ -1888,22 +1894,30 @@
       }
     }
 
-    minusBtn.addEventListener('click', () => {
-      if (quantity > 1) {
-        quantity--;
-        updateQuantityDisplay();
-      }
+    // Add event listeners to all minus buttons
+    minusBtns.forEach((minusBtn, index) => {
+      minusBtn.addEventListener('click', () => {
+        if (quantities[index] > 1) {
+          quantities[index]--;
+          updateQuantityDisplay(index);
+        }
+      });
     });
 
-    plusBtn.addEventListener('click', () => {
-      if (quantity < MAX_QUANTITY) {
-        quantity++;
-        updateQuantityDisplay();
-      }
+    // Add event listeners to all plus buttons
+    plusBtns.forEach((plusBtn, index) => {
+      plusBtn.addEventListener('click', () => {
+        if (quantities[index] < MAX_QUANTITY) {
+          quantities[index]++;
+          updateQuantityDisplay(index);
+        }
+      });
     });
 
-    // Initialize quantity display
-    updateQuantityDisplay();
+    // Initialize all quantity displays
+    quantities.forEach((_, index) => {
+      updateQuantityDisplay(index);
+    });
 
     // Image gallery functionality
 
@@ -2028,7 +2042,8 @@
     const closeCart = document.querySelector('.close-cart');
     const cartCount = document.querySelector('.cart-count');
 
-    function toggleCart() {
+    // Make toggleCart function global for Buy Now button
+    window.toggleCart = function() {
       cartMenu.classList.toggle('active');
       cartOverlay.classList.toggle('active');
       document.body.style.overflow = cartMenu.classList.contains('active') ? 'hidden' : '';
@@ -2051,6 +2066,8 @@
     function createCartItem(product) {
       const cartItem = document.createElement('div');
       cartItem.className = 'cart-item';
+      
+      // Create the HTML structure
       cartItem.innerHTML = `
         <div class="cart-item-image">
           <img src="${product.image}" alt="${product.name}">
@@ -2059,19 +2076,33 @@
           <div class="cart-item-name">${product.name}</div>
           <div class="cart-item-price">${product.price.toLocaleString()} دج</div>
           <div class="cart-item-quantity">
-            <button class="decrease-quantity" onclick="updateItemQuantity(${product.id}, -1)">
+            <button class="decrease-quantity">
               <i class="fas fa-minus"></i>
             </button>
             <span>${product.quantity}</span>
-            <button class="increase-quantity" onclick="updateItemQuantity(${product.id}, 1)">
+            <button class="increase-quantity">
               <i class="fas fa-plus"></i>
             </button>
           </div>
         </div>
-        <button class="cart-item-remove" onclick="removeFromCart(${product.id})">
+        <button class="cart-item-remove">
           <i class="fas fa-trash"></i>
         </button>
       `;
+      
+      // Add event listeners directly to the buttons
+      cartItem.querySelector('.decrease-quantity').addEventListener('click', () => {
+        window.updateItemQuantity(product.id, -1);
+      });
+      
+      cartItem.querySelector('.increase-quantity').addEventListener('click', () => {
+        window.updateItemQuantity(product.id, 1);
+      });
+      
+      cartItem.querySelector('.cart-item-remove').addEventListener('click', () => {
+        window.removeFromCart(product.id);
+      });
+      
       return cartItem;
     }
 
@@ -2085,7 +2116,8 @@
       updateCartTotal();
     }
 
-    function updateItemQuantity(productId, change) {
+    // Make these functions global so they can be accessed by onclick attributes
+    window.updateItemQuantity = function(productId, change) {
       const item = cart.find(item => item.id === productId);
       if (item) {
         item.quantity = Math.max(1, Math.min(99, item.quantity + change));
@@ -2093,107 +2125,121 @@
       }
     }
 
-    function removeFromCart(productId) {
+    window.removeFromCart = function(productId) {
       cart = cart.filter(item => item.id !== productId);
       updateCartUI();
     }
 
     // Add to cart button click handler
-    document.querySelector('.add-to-cart').addEventListener('click', function() {
-      const product = {
-        id: Date.now(), // Using timestamp as a simple unique ID
-        name: document.querySelector('.product-title').textContent,
-        price: 8900, // This should match your product price
-        image: document.getElementById('mainImage').src,
-        quantity: quantity
-      };
+    document.querySelectorAll('.add-to-cart').forEach((button, index) => {
+      button.addEventListener('click', function() {
+        const productCard = this.closest('.product-card');
+        const productName = productCard.querySelector('.product-name').textContent;
+        const productPrice = parseInt(productCard.querySelector('.product-price').getAttribute('data-price') || 8900);
+        const productImage = productCard.querySelector('img').src;
+        const quantity = quantities[index];
+        
+        const product = {
+          id: Date.now() + index, // Using timestamp plus index as a simple unique ID
+          name: productName,
+          price: productPrice,
+          image: productImage,
+          quantity: quantity
+        };
 
-      const existingItem = cart.find(item => item.name === product.name);
-      if (existingItem) {
-        existingItem.quantity = Math.min(99, existingItem.quantity + quantity);
-      } else {
-        cart.push(product);
-      }
-      updateCartUI();
-      // Remove existing notification if present
-      if (currentNotification) {
-        currentNotification.remove();
-      }
+        const existingItem = cart.find(item => item.name === product.name);
+        if (existingItem) {
+          existingItem.quantity = Math.min(99, existingItem.quantity + quantity);
+        } else {
+          cart.push(product);
+        }
+        updateCartUI();
+        // Remove existing notification if present
+        if (currentNotification) {
+          currentNotification.remove();
+        }
 
-      const successMessage = document.createElement('div');
-      Object.assign(successMessage.style, {
-        position: 'fixed',
-        top: '20px',
-        left: '50%',
-        transform: 'translate(-50%, -20px)',
-        background: 'var(--success-color)',
-        color: 'white',
-        padding: '1rem 2rem',
-        borderRadius: 'var(--border-radius)',
-        zIndex: '1000',
-        transition: 'all 0.3s ease',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1rem',
-        opacity: '0',
-        direction: 'rtl'
-      });
+        const successMessage = document.createElement('div');
+        Object.assign(successMessage.style, {
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translate(-50%, -20px)',
+          background: 'var(--success-color)',
+          color: 'white',
+          padding: '1rem 2rem',
+          borderRadius: 'var(--border-radius)',
+          zIndex: '1000',
+          transition: 'all 0.3s ease',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+          opacity: '0',
+          direction: 'rtl'
+        });
 
-      const icon = document.createElement('i');
-      icon.className = 'fas fa-check-circle';
-      successMessage.appendChild(icon);
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-check-circle';
+        successMessage.appendChild(icon);
 
-      const text = document.createElement('span');
-      text.textContent = `تم إضافة ${quantity} من المنتج إلى السلة!`;
-      successMessage.appendChild(text);
-      
-      document.body.appendChild(successMessage);
-      currentNotification = successMessage;
-      
-      // Trigger reflow for animation
-      successMessage.offsetHeight;
-      
-      // Show notification
-      requestAnimationFrame(() => {
-        successMessage.style.opacity = '1';
-        successMessage.style.transform = 'translate(-50%, 0)';
-      });
-      
-      setTimeout(() => {
-        successMessage.style.opacity = '0';
-        successMessage.style.transform = 'translate(-50%, -20px)';
+        const text = document.createElement('span');
+        text.textContent = `تم إضافة ${quantity} من المنتج إلى السلة!`;
+        successMessage.appendChild(text);
+        
+        document.body.appendChild(successMessage);
+        currentNotification = successMessage;
+        
+        // Trigger reflow for animation
+        successMessage.offsetHeight;
+        
+        // Show notification
+        requestAnimationFrame(() => {
+          successMessage.style.opacity = '1';
+          successMessage.style.transform = 'translate(-50%, 0)';
+        });
         
         setTimeout(() => {
-          if (successMessage.parentNode) {
-            successMessage.remove();
-          }
-          if (currentNotification === successMessage) {
-            currentNotification = null;
-          }
-        }, 300);
-      }, 2000);
-    });
-
-    // Buy Now button click handler
-    document.querySelector('.buy-now').addEventListener('click', function() {
-      const product = {
-        id: Date.now(),
-        name: document.querySelector('.product-title').textContent,
-        price: 8900,
-        image: document.getElementById('mainImage').src,
-        quantity: quantity
-      };
-      
-      // Add item to cart
-      cart = [product];
-      updateCartUI();
-      
-      // Open cart menu
-      toggleCart();
-      
-      // Open checkout form directly
-      showCheckoutForm();
+          successMessage.style.opacity = '0';
+          successMessage.style.transform = 'translate(-50%, -20px)';
+          
+          setTimeout(() => {
+            if (successMessage.parentNode) {
+              successMessage.remove();
+            }
+            if (currentNotification === successMessage) {
+              currentNotification = null;
+            }
+          }, 300);
+        }, 2000);
+      });
+    });    // Buy Now button click handler
+    document.querySelectorAll('.buy-now').forEach((button, index) => {
+      button.addEventListener('click', function() {
+        const productCard = this.closest('.product-card');
+        const productName = productCard.querySelector('.product-name').textContent;
+        const productPrice = parseInt(productCard.querySelector('.product-price').getAttribute('data-price') || 8900);
+        const productImage = productCard.querySelector('img').src;
+        const quantity = quantities[index];
+        
+        const product = {
+          id: Date.now() + index,
+          name: productName,
+          price: productPrice,
+          image: productImage,
+          quantity: quantity
+        };
+        
+        // Add item to cart
+        cart = [product];
+        updateCartUI();
+        
+        // Open cart menu
+        toggleCart();
+        
+        // Open checkout form directly
+        showCheckoutForm();
+      });
     });
 
     // Checkout form functionality
@@ -2203,7 +2249,8 @@
     const orderItems = document.querySelector('.order-items');
     const summaryTotal = document.querySelector('.summary-total');
 
-    function showCheckoutForm() {
+    // Make showCheckoutForm function global
+    window.showCheckoutForm = function() {
       // Update order summary
       orderItems.innerHTML = cart.map(item => `
         <div class="order-item">
